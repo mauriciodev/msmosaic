@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- see the accompanying mapcache.xml.sample for a fully commented configuration file -->
+
+<mapcache>
+   <cache name="disk" type="disk">
+      <base>/tmp</base>
+      <symlink_blank/>
+   </cache>
+   <cache name="sqlite" type="sqlite3">
+     <dbfile>/tmp/{tileset}-{z}-{grid}.db</dbfile>
+      <detect_blank/>
+   </cache>
+
+   <default_format>JPEG</default_format>
+
+   <service type="wms" enabled="true">
+      <full_wms>assemble</full_wms>
+      <resample_mode>bilinear</resample_mode>
+      <format>JPEG</format>
+      <maxsize>4096</maxsize>
+   </service>
+   <service type="wmts" enabled="true"/>
+   <service type="tms" enabled="true"/>
+   <service type="kml" enabled="true"/>
+   <service type="gmaps" enabled="true"/>
+   <service type="ve" enabled="true"/>
+   <service type="mapguide" enabled="true"/>
+   <service type="demo" enabled="true"/>
+
+   <errors>report</errors>
+   <locker type="disk">
+     <directory>/tmp</directory>
+     <timeout>300</timeout>
+    </locker>
+
+    {% block content %}
+    {% for layer in layers %}
+    <source name="{{layer.layername}}" type="wms">
+        <http>
+            <url>{{ layer.connection.wmsURL }}</url>
+        </http>
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>{{layer.layername}}</LAYERS>
+            <!--<MAP>/Users/tbonfort/dev/mapserver-utils/empty.map</MAP>-->
+         </params>
+      </getmap>
+    </source>
+    
+    <tileset name="{{layer.layername}}">
+      <metadata>
+         <title>{{layer.title}}</title>
+         <abstract>{{layer.abstract}}</abstract>
+      </metadata>
+      <source>{{layer.layername}}</source>
+      <cache>disk</cache>
+      <format>PNG</format>
+      <grid>WGS84</grid>
+      <grid>g</grid>
+      <metatile>1 1</metatile>
+      <expires>1</expires>
+      <metabuffer>1</metabuffer>
+    </tileset>
+    {% endfor %}
+    {% endblock %}
+    
+</mapcache>
+ 
