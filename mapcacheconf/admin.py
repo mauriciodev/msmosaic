@@ -5,7 +5,6 @@ from django.contrib import admin
 from .models import MapCacheInstance
 admin.site.register(MapCacheInstance)
 
-
 #RemoteWMSInstance
 from .models import RemoteWMSInstance
 class RemoteWMSInstanceAdmin(admin.ModelAdmin):
@@ -17,6 +16,16 @@ class RemoteWMSInstanceAdmin(admin.ModelAdmin):
 admin.site.register(RemoteWMSInstance, RemoteWMSInstanceAdmin)
 
 
+#MapCacheSeedProcess
+from .models import MapCacheSeedProcess
+class MapCacheSeedProcessAdmin(admin.ModelAdmin):
+    def updateProcessessState(self,request, queryset):
+        for row in queryset:
+            row.update()   
+    updateProcessessState.short_description = "Update process status"
+    actions = [updateProcessessState]   
+admin.site.register(MapCacheSeedProcess, MapCacheSeedProcessAdmin)
+
 #CachedLayer
 from .models import CachedLayer
 class CachedLayerAdmin(admin.ModelAdmin):
@@ -25,3 +34,4 @@ class CachedLayerAdmin(admin.ModelAdmin):
     search_fields = ['layername']
     list_filter = ['connection']
 admin.site.register(CachedLayer, CachedLayerAdmin)
+

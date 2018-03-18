@@ -50,18 +50,39 @@ import subprocess
 class MapCacheSeedProcess(models.Model):
     pid=models.IntegerField(blank=True)
     startTime=models.DateTimeField(auto_now_add=True, blank=True)
-    layer=models.ForeignKey(CachedLayer, on_delete=models.SET_NULL, blank=True, null=True)
+    mapcacheinstance=models.ForeignKey('MapCacheInstance', on_delete=models.CASCADE)
+    
+    layer=models.ForeignKey(CachedLayer, on_delete=models.CASCADE)
     parameters=models.CharField(max_length=200,blank=True)
     def save(self, *args, **kwargs):
         if not self.pid:
-            proc = subprocess.Popen("mapcache_seed", shell=True, preexec_fn=os.setsid)
-            self.pid=proc.pid
-             
-            
-        super(MapCacheInstance, self).save(*args, **kwargs)
-    def kill(self):
-        os.killpg(self.pid, signal.SIGTERM)
+            #TO DO: THIS SHOULD ITERATE OVER EVERY MAPCACHE
+            parameters=["mapcache_seed","-c",self.mapcacheinstance.mapCacheXmlPath,'-t',self.layer.layername,"-z","0,8"]
+            print(parameters)
+            self.pid = subprocess.Popen(parameters, stdout=None).pid
+        super(MapCacheSeedProcess, self).save(*args, **kwargs)
     
+    def is_process_running(self):
+        try:
+            os.kill(self.pid, 0)
+            return True
+        except OSError:
+            return False
+    
+    def kill(self):
+        if self.is_process_running():
+            os.kill(self.pid, signal.SIGTERM)
+    def delete(self, *args, **kwargs):
+        self.kill()
+        super(MapCacheSeedProcess, self).delete(*args, **kwargs)
+    def update(self):
+        
+        if not self.is_process_running(): #this is not what it looks like. It's just to CHECK if it's running.
+            print ("tentando remover")
+            self.delete()
+        
+    def __str__(self):
+        return "%s %s %s %s" % (self.pid, self.startTime, self.layer, self.mapcacheinstance )
 
 class MapCacheInstance(models.Model):
     name=models.CharField(max_length=60, default="WSProvider")
